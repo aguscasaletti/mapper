@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -630,4 +631,79 @@ func Test_returnsErrWhenMapStructToSlice(t *testing.T) {
 	regions := []Regions{}
 	err := Map(country, &regions)
 	assert.Error(t, err)
+}
+
+func Test_mapStructWithFromFieldTag(t *testing.T) {
+	type Source struct {
+		ID         int
+		Name       string
+		FamilyName string
+	}
+
+	type Target struct {
+		ID        int
+		FirstName string `mapper:"fromField:Name"`
+		LastName  string `mapper:"fromField:FamilyName"`
+	}
+
+	source := Source{ID: 120, Name: "John", FamilyName: "Doe"}
+	target := Target{}
+	err := Map(source, &target)
+	assert.Nil(t, err)
+
+	expected := Target{ID: 120, FirstName: "John", LastName: "Doe"}
+	assert.Equal(t, expected, target)
+}
+
+type PersonTest struct {
+	ID        int
+	FirstName string
+	LastName  string
+	Score     float64
+}
+
+func (s *PersonTest) GetFullName() string {
+	return fmt.Sprintf("%v %v", s.FirstName, s.LastName)
+}
+
+func (s PersonTest) HasPassed() bool {
+	return s.Score >= 70
+}
+
+func Test_mapStructWithFromMethodTag(t *testing.T) {
+
+	type Target struct {
+		ID       int
+		FullName string `mapper:"fromMethod:GetFullName"`
+		Passed   bool   `mapper:"fromMethod:HasPassed"`
+	}
+
+	source := PersonTest{ID: 120, FirstName: "John", LastName: "Doe", Score: 86.5}
+	target := Target{}
+	err := Map(source, &target)
+	assert.Nil(t, err)
+
+	expected := Target{ID: 120, FullName: "John Doe", Passed: true}
+	assert.Equal(t, expected, target)
+}
+
+func Test_mapStructWithUnexportedFields(t *testing.T) {
+	type Source struct {
+		name string
+		age  int
+	}
+
+	type Target struct {
+		name string
+		age  int
+	}
+
+	source := Source{name: "John", age: 23}
+	target := Target{}
+	err := Map(source, &target)
+	assert.Nil(t, err)
+
+	// We effectively ignore unexported source fields without crashing or raising an error value
+	expected := Target{name: "", age: 0}
+	assert.Equal(t, expected, target)
 }

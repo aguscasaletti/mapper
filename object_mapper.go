@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"time"
+
+	"github.com/fatih/structtag"
 )
 
 type TypeConverterFn func(interface{}) interface{}
@@ -17,7 +20,7 @@ var defaultTypeConvertMap = map[string]TypeConverterFn{
 	},
 }
 
-func verifyParameters(source interface{}, target interface{}) error {
+func validateParameters(source interface{}, target interface{}) error {
 	if target == nil {
 		return NewParamErrorNotNil("target")
 	}
@@ -40,7 +43,7 @@ func Map(source, target interface{}) error {
 // MapWithConverters - map values from source to target, and use converter functions passed
 // 	when the default behavior is not enough
 func MapWithConverters(source, target interface{}, converters map[string]TypeConverterFn) error {
-	if err := verifyParameters(source, target); err != nil {
+	if err := validateParameters(source, target); err != nil {
 		return err
 	}
 
@@ -80,6 +83,46 @@ func mapValues(sourceValue reflect.Value, targetValue reflect.Value, converters 
 	return targetValue.Interface(), nil
 }
 
+// getSourceFieldValue - Gets the source field value with the following rules:
+//  - if a mapper tag exists AND has a fromField property, use that
+//  - if a mapper tag exists AND has a fromMethod property, invoke that method and use that
+//  - else return the source struct's field value (if any)
+//  - if no field is present return a Zero value that will fail an IsValid() check
+func getSourceFieldValue(sourceStruct reflect.Value, targetStructField reflect.StructField) reflect.Value {
+	tag := targetStructField.Tag
+	tags, _ := structtag.Parse(string(tag))
+
+	if mapperTag, _ := tags.Get("mapper"); mapperTag != nil {
+		for _, setting := range strings.Split(mapperTag.Value(), ";") {
+			switch {
+			case strings.HasPrefix(setting, "fromField:"):
+				sourceFieldName := strings.Split(setting, ":")[1]
+				return sourceStruct.FieldByName(sourceFieldName)
+			case strings.HasPrefix(setting, "fromMethod"):
+				sourceMethodName := strings.Split(setting, ":")[1]
+
+				// Search struct receiver. E.g: func (s PersonTest) GetFullName() string
+				method := sourceStruct.MethodByName(sourceMethodName)
+				if !method.IsValid() {
+					// Search pointer receiver. E.g: func (s *PersonTest) GetFullName() string
+					ptr := reflect.New(sourceStruct.Type())
+					ptr.Elem().Set(sourceStruct)
+					method = ptr.MethodByName(sourceMethodName)
+				}
+
+				if method.IsValid() {
+					values := method.Call(make([]reflect.Value, 0))
+					if len(values) > 0 {
+						return values[0]
+					}
+				}
+			}
+		}
+	}
+
+	return sourceStruct.FieldByName(targetStructField.Name)
+}
+
 func mapToStruct(sourceValue, targetValue reflect.Value, converters *map[string]TypeConverterFn) (interface{}, error) {
 	numFields := targetValue.NumField()
 
@@ -89,10 +132,12 @@ func mapToStruct(sourceValue, targetValue reflect.Value, converters *map[string]
 	for i := 0; i < numFields; i++ {
 		targetField := targetValue.Type().Field(i)
 		targetFieldValue := targetValue.FieldByName(targetField.Name)
-		sourceFieldValue := sourceValue.FieldByName(targetField.Name)
+		sourceFieldValue := getSourceFieldValue(sourceValue, targetField)
 
-		// E.g: the field does not exist
-		if !sourceFieldValue.IsValid() {
+		// E.g: the field does not exist or is not exported
+		// check CanInterface to see if sourceFieldValue is exported or not
+		// we IGNORE unexported source fields
+		if !sourceFieldValue.IsValid() || !sourceFieldValue.CanInterface() {
 			continue
 		}
 
