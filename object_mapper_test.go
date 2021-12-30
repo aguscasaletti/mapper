@@ -76,7 +76,7 @@ func Test_mapStruct(t *testing.T) {
 	assert.Equal(t, expected, target)
 }
 
-func Test_mapStructIgnoreNonPresentFields(t *testing.T) {
+func Test_mapStructIgnoreMissingFields(t *testing.T) {
 	type Source struct {
 		Name       string
 		Age        int
@@ -95,6 +95,29 @@ func Test_mapStructIgnoreNonPresentFields(t *testing.T) {
 	assert.Nil(t, err)
 
 	expected := Target{Name: "John", Age: 30}
+	assert.Equal(t, expected, target)
+}
+
+func Test_mapStructTargetWithExtraFields(t *testing.T) {
+	type Source struct {
+		Name string
+		Age  int
+	}
+
+	type Target struct {
+		Name       string
+		Age        int
+		Profession string
+		HasPets    bool
+		Parent     *Target
+	}
+
+	source := Source{Name: "John", Age: 30}
+	target := Target{}
+	err := Map(source, &target)
+	assert.Nil(t, err)
+
+	expected := Target{Name: "John", Age: 30, Profession: "", HasPets: false, Parent: nil}
 	assert.Equal(t, expected, target)
 }
 

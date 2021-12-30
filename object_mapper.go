@@ -91,7 +91,8 @@ func mapToStruct(sourceValue, targetValue reflect.Value, converters *map[string]
 		targetFieldValue := targetValue.FieldByName(targetField.Name)
 		sourceFieldValue := sourceValue.FieldByName(targetField.Name)
 
-		if !sourceValue.IsValid() {
+		// E.g: the field does not exist
+		if !sourceFieldValue.IsValid() {
 			continue
 		}
 
