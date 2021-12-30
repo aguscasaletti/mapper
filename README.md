@@ -8,7 +8,16 @@ $ go get github.com/agustinaliagac/mapper
 ```
 
 ## How it works
-This library copies values from source to target structs **only if their field names match.** Any field name not present in source will be ignored and left with its zero-value. If you need anything beyond that, you will probably have to write your own mapping logic, with or without this library's help.
+This library copies values from source to target objects by following these rules:
+- If a `mapper` struct field tag is present, look for `fromField` or `fromMethod` options.
+- Else, use the same field name declared in the target struct.
+- All other fields from source that don't exist in the target are ignored.
+- All fields in target that have no counterpart in source are left with their zero-value.
+- All unexported fields are silently ignored.
+
+If you need anything beyond that, you will probably have to write your own mapping logic, with or without this library's help.
+
+## Usage
 
 ```go
 type Source struct {
@@ -92,9 +101,6 @@ type UserDTO struct {
 ## What are the benefits of using this library?
 - Reduce your project's boilerplate, repetitive code (which can be quite huge for large structs and which you'll have to maintain), which in return will:
 - Let you focus on more important things that actually add some value to your project as a whole
-- Map between different types (as long as they're compatible). E.g: mapping an integer or a floating point number into a string
-- Use custom type converter functions when you're doing something too specific
-
 
 ## What are the risks/drawbacks of using this library?
 ### Performance
@@ -116,11 +122,11 @@ BenchmarkMapping/MapLargeSliceOfStructsManual-4         1000000000              
 
 As you can see, code that uses reflection can be roughly 8-15 times slower, but don't take this as a definitive statement. You can always try it out for yourself and measure how big the impact is in your codebase.
 
-Depending on your requirements and how big the objects you're mapping are, the overall performance hit may or may not justify the productivity gains of using this library.
+Depending on your requirements and how big the objects you're mapping are, the overall performance hit may or may not outweight the productivity gains of using this library.
 
 ### Compile time errors
 
-One of Go's most appealing properties to me is its static-typing. When you're writing your own transformation functions, you get compile-time errors when doing something wrong. However, note that having compile-time errors will not protect you for any kind of issues: e.g: if you make a mistake like forgetting to set one field to the target struct.
+One of Go's most appealing properties to me is its static-typing. When you're writing your own transformation functions, you get compile-time errors when doing something wrong. However, *note that having compile-time errors will not protect you from any type of issues: e.g: if you make a mistake by forgetting to set one field to the target struct*.
 
 When you're using this library, you're letting type-conversion be a run-time operation, and as such, you should now be prepared to handle errors at run-time.
 You can do this just like you handle any other error in the Go language:
