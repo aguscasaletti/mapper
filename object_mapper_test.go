@@ -8,6 +8,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func buildLargeTestStruct() Large {
+	return Large{
+		Name:   "Test",
+		Age:    30,
+		Value:  false,
+		Score:  394.3,
+		Score2: 14.2,
+		Map: map[string]string{
+			"somekey": "someval",
+		},
+		Child1: LargeChild{
+			Items: []LargeChildItem{
+				{
+					ID:    "43",
+					Value: true,
+				},
+				{
+					ID:    "44",
+					Value: false,
+				},
+			},
+		},
+		Child2: LargeChild{
+			Items: []LargeChildItem{
+				{
+					ID:    "10",
+					Value: false,
+				},
+				{
+					ID:    "44",
+					Value: false,
+				},
+			},
+		},
+		Child3: LargeChild{
+			Items: []LargeChildItem{
+				{
+					ID:    "11",
+					Value: false,
+				},
+				{
+					ID:    "44",
+					Value: false,
+				},
+			},
+		},
+	}
+}
 func Test_mapStruct(t *testing.T) {
 	type Source struct {
 		Name string
@@ -21,7 +69,8 @@ func Test_mapStruct(t *testing.T) {
 
 	source := Source{Name: "John", Age: 23}
 	target := Target{}
-	Map(source, &target)
+	err := Map(source, &target)
+	assert.Nil(t, err)
 
 	expected := Target{Name: "John", Age: 23}
 	assert.Equal(t, expected, target)
@@ -317,6 +366,75 @@ func Test_mapSliceOfStructs(t *testing.T) {
 
 	expected := []Regions{{"Argentina"}, {"USA"}, {"Deutschland"}}
 	assert.Equal(t, expected, regions)
+}
+
+func Test_mapLargeSliceOfStructs(t *testing.T) {
+	type TargetItem struct {
+		ID    string
+		Value bool
+	}
+
+	type TargetChild struct {
+		Items []TargetItem
+	}
+
+	type Target struct {
+		Name   string
+		Age    int
+		Value  bool
+		Score  float64
+		Score2 float64
+		Map    map[string]string
+		Child1 TargetChild
+		Child2 TargetChild
+		Child3 TargetChild
+	}
+
+	source := make([]Large, 0)
+	for i := 0; i < 1000; i++ {
+		source = append(source, buildLargeTestStruct())
+	}
+
+	target := make([]Target, 0)
+	err := Map(source, &target)
+	assert.Nil(t, err)
+
+	buildTargetChild := func(s LargeChild) TargetChild {
+		items := make([]TargetItem, 0)
+		for _, v := range s.Items {
+			items = append(items, TargetItem{
+				ID:    v.ID,
+				Value: v.Value,
+			})
+		}
+
+		return TargetChild{
+			Items: items,
+		}
+	}
+
+	buildTarget := func(source Large) Target {
+		target := Target{
+			Name:   source.Name,
+			Age:    source.Age,
+			Value:  source.Value,
+			Score:  source.Score,
+			Score2: source.Score2,
+			Map:    source.Map,
+			Child1: buildTargetChild(source.Child1),
+			Child2: buildTargetChild(source.Child2),
+			Child3: buildTargetChild(source.Child3),
+		}
+
+		return target
+	}
+
+	expect := make([]Target, 0)
+	for _, v := range source {
+		expect = append(expect, buildTarget(v))
+	}
+
+	assert.Equal(t, expect, target)
 }
 
 func Test_mapPointerToSliceOfStructs(t *testing.T) {

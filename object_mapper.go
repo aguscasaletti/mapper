@@ -166,7 +166,6 @@ func mapToSlice(sourceValue, targetValue reflect.Value, converters *map[string]T
 		return nil, nil
 	}
 
-	// initialize slice
 	sourceValue = reflect.Indirect(sourceValue)
 	if sourceValue.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("cannot map to a slice from type: %v", sourceValue.Type().String())
