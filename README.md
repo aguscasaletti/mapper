@@ -39,7 +39,7 @@ This library copies values from A to B structs following these rules:
 
 
 ## Usage
-Because this library doesn't return a copy of the target object, **always pass a pointer as a target argument. Otherwise you'll get a run-time error (ErrExpectedAPointer).**
+Because this library doesn't return a copy of the target object, **always pass a pointer as a target argument. Otherwise you'll get a run-time error (ErrMustBePointer).**
 
 ```go
 type Person struct {
