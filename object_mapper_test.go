@@ -704,6 +704,6 @@ func Test_mapStructWithUnexportedFields(t *testing.T) {
 	assert.Nil(t, err)
 
 	// We effectively ignore unexported source fields without crashing or raising an error value
-	expected := Target{name: "", age: 0}
+	expected := Target{name: "", age: 10}
 	assert.Equal(t, expected, target)
 }
