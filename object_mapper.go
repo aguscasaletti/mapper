@@ -98,7 +98,7 @@ func getSourceFieldValue(sourceStruct reflect.Value, targetStructField reflect.S
 			case strings.HasPrefix(setting, "fromField:"):
 				sourceFieldName := strings.Split(setting, ":")[1]
 				return sourceStruct.FieldByName(sourceFieldName)
-			case strings.HasPrefix(setting, "fromMethod"):
+			case strings.HasPrefix(setting, "fromMethod:"):
 				sourceMethodName := strings.Split(setting, ":")[1]
 
 				// Search struct receiver. E.g: func (s PersonTest) GetFullName() string

@@ -20,23 +20,23 @@ func NewFieldError(fieldName, context string, err error) *FieldError {
 	}
 }
 
-type ParametersError struct {
+type ParameterError struct {
 	parameterName string
 	context       string
 }
 
-func (e *ParametersError) Error() string {
+func (e *ParameterError) Error() string {
 	return fmt.Sprintf("Invalid parameter: %v\n%v", e.parameterName, e.context)
 }
 
-func NewParamErrorNotNil(parameterName string) *ParametersError {
-	return &ParametersError{
+func NewParamErrorNotNil(parameterName string) *ParameterError {
+	return &ParameterError{
 		parameterName: parameterName,
 		context:       "cannot not be nil",
 	}
 }
 
-var ErrTargetParamNotPointer = &ParametersError{
+var ErrTargetParamNotPointer = &ParameterError{
 	parameterName: "target",
 	context:       "must be a pointer",
 }

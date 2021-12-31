@@ -580,7 +580,7 @@ func Test_returnsErrWhenNilParam(t *testing.T) {
 		Name string
 		Age  int
 	}
-	var e *ParametersError
+	var e *ParameterError
 
 	// Nil target
 	source := Person{Name: "John", Age: 23}

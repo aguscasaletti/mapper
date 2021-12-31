@@ -1,4 +1,8 @@
+
 # Object mapper
+[![codecov](https://codecov.io/gh/agustinaliagac/mapper/branch/master/graph/badge.svg?token=E6X65Z3EFT)](https://codecov.io/gh/agustinaliagac/mapper)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 
 A tiny library to perform value mappings from a source to a target using reflection.
 
@@ -7,39 +11,67 @@ A tiny library to perform value mappings from a source to a target using reflect
 $ go get github.com/agustinaliagac/mapper
 ```
 
-## How it works
-This library copies values from source to target objects by following these rules:
-- If a `mapper` struct field tag is present, look for `fromField` or `fromMethod` options.
-- Else, use the same field name declared in the target struct.
-- All other fields from source that don't exist in the target are ignored.
-- All fields in target that have no counterpart in source are left with their zero-value.
-- All unexported fields are silently ignored.
+## Features
+- Map/copy values from A to B objects (structs, slices, etc.)
+- Automatically handle types conversion (when types are compatible)
+- Recursively map all nested objects
+- [Define the field or method you want to extract data from](#struct-field-tag-options), if you need to
 
-If you need anything beyond that, you will probably have to write your own mapping logic, with or without this library's help.
+
+## How it works
+This library copies values from A to B structs following these rules:
+- If a `mapper` struct field tag is present, look for `fromField` or `fromMethod` options in B.
+- If not, copy the value from A to B with the same field name.
+- Ignore all fields that exist in A but not in B.
+- All fields in B that don't exist in A are left with their zero-value.
+- All unexported fields are silently ignored (you should avoid relying on these kind of fields)
+
+
+### Struct field tag options
+
+| Option                  | Description                                                                                                                                                        | Example                                                |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
+| fromField:{FieldName}   | Maps the exported `{FieldName}` from source to target structs.                                                                                                     | FirstName  string   \`mapper:"fromField:Name"\`        |
+| fromMethod:{MethodName} | Calls the exported `{MethodName}` from source to set the value at target. This method should receive zero arguments, and only the first result value will be used. | FullName  string   \`mapper:"fromMethod:GetFullName"\` |
+
+
+
 
 ## Usage
+Because this library doesn't return a copy of the target object, **always pass a pointer as a target argument. Otherwise you'll get a run-time error (ErrTargetParamNotPointer).**
 
 ```go
-type Source struct {
-    Name       string
-    Age        int
-    Profession string
-    HasPets    bool
+type Person struct {
+	ID        int
+	FirstName string
+	LastName  string
+	Score     float64
 }
 
-type Target struct {
-    Name string
-    Age  int
+func (s *Person) GetFullName() string {
+	return fmt.Sprintf("%v %v", s.FirstName, s.LastName)
 }
 
-source := Source{Name: "John", Age: 30, Profession: "engineer", HasPets: true}
-target := Target{}
-err := Map(source, &target)
+func (s Person) HasPassed() bool {
+	return s.Score >= 70
+}
+
+type Student struct {
+	ID       int
+	FullName string `mapper:"fromMethod:GetFullName"`
+	Passed   bool   `mapper:"fromMethod:HasPassed"`
+}
+
+person := Person{ID: 120, FirstName: "John", LastName: "Doe", Score: 86.5}
+student := Student{}
+
+// You should always pass a pointer as a target!
+err := Map(person, &student)
 if err != nil {
     // handle error
 }
 
-fmt.Println(target) // {John 30}
+fmt.Println(student) // {120 John Doe true}
 ```
 
 ## Use cases
@@ -137,3 +169,4 @@ if err != nil {
     // Do something
 }
 ```
+

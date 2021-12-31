@@ -1,0 +1,28 @@
+name: Codecov report
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  upload-report:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+    - name: Generate coverage report
+      run: |
+        go test -race -coverprofile=coverage.out -covermode=atomic
+    - uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.out
+        fail_ci_if_error: true
+        verbose: true
