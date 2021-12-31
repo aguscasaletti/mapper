@@ -5,7 +5,7 @@
 ![Tests](https://github.com/agustinaliagac/mapper/actions/workflows/run-tests.yml/badge.svg?branch=master)
 
 
-A tiny library to perform value mappings from a source to a target using reflection.
+A tiny Go library to perform value mappings from a source to a target using reflection.
 
 ## Install
 ```bash
@@ -39,7 +39,7 @@ This library copies values from A to B structs following these rules:
 
 
 ## Usage
-Because this library doesn't return a copy of the target object, **always pass a pointer as a target argument. Otherwise you'll get a run-time error (ErrTargetParamNotPointer).**
+Because this library doesn't return a copy of the target object, **always pass a pointer as a target argument. Otherwise you'll get a run-time error (ErrMustBePointer).**
 
 ```go
 type Person struct {
@@ -53,14 +53,10 @@ func (s *Person) GetFullName() string {
 	return fmt.Sprintf("%v %v", s.FirstName, s.LastName)
 }
 
-func (s Person) HasPassed() bool {
-	return s.Score >= 70
-}
-
 type Student struct {
 	ID       int
 	FullName string `mapper:"fromMethod:GetFullName"`
-	Passed   bool   `mapper:"fromMethod:HasPassed"`
+	StudentScore   float64   `mapper:"fromField:Score"`
 }
 
 person := Person{ID: 120, FirstName: "John", LastName: "Doe", Score: 86.5}
@@ -72,7 +68,7 @@ if err != nil {
     // handle error
 }
 
-fmt.Println(student) // {120 John Doe true}
+fmt.Println(student) // {120 John Doe 86.5}
 ```
 
 ## Use cases
