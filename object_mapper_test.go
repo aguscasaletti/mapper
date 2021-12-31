@@ -580,19 +580,18 @@ func Test_returnsErrWhenNilParam(t *testing.T) {
 		Name string
 		Age  int
 	}
-	var e *ParameterError
 
 	// Nil target
 	source := Person{Name: "John", Age: 23}
 	err := Map(source, nil)
 	assert.Error(t, err)
-	assert.ErrorAs(t, err, &e)
+	assert.ErrorIs(t, err, ErrUnexpectedNil)
 
 	// Nil source
 	target := Person{Name: "John", Age: 23}
 	err = Map(nil, target)
 	assert.Error(t, err)
-	assert.ErrorAs(t, err, &e)
+	assert.ErrorIs(t, err, ErrUnexpectedNil)
 }
 
 func Test_returnsErrWhenTargetNotPointer(t *testing.T) {
@@ -610,7 +609,7 @@ func Test_returnsErrWhenTargetNotPointer(t *testing.T) {
 
 	err := Map(source, target)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrTargetParamNotPointer)
+	assert.ErrorIs(t, err, ErrMustBePointer)
 
 	assert.Contains(t, err.Error(), "must be a pointer")
 }

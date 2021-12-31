@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/structtag"
 )
 
+// TypeConverterFn is a function that receives any value and converts it into a different type that is returned
 type TypeConverterFn func(interface{}) interface{}
 
 var defaultTypeConvertMap = map[string]TypeConverterFn{
@@ -22,26 +23,26 @@ var defaultTypeConvertMap = map[string]TypeConverterFn{
 
 func validateParameters(source interface{}, target interface{}) error {
 	if target == nil {
-		return NewParamErrorNotNil("target")
+		return fmt.Errorf("invalid target parameter: %w", ErrUnexpectedNil)
 	}
 	if source == nil {
-		return NewParamErrorNotNil("source")
+		return fmt.Errorf("invalid source parameter: %w", ErrUnexpectedNil)
 	}
 
 	if reflect.ValueOf(target).Kind() != reflect.Ptr {
-		return ErrTargetParamNotPointer
+		return fmt.Errorf("invalid target parameter: %w", ErrMustBePointer)
 	}
 
 	return nil
 }
 
-// Map - map values from source to target
+// Map copies values from source to target (pointer), and returns an error if any
 func Map(source, target interface{}) error {
 	return MapWithConverters(source, target, defaultTypeConvertMap)
 }
 
-// MapWithConverters - map values from source to target, and use converter functions passed
-// 	when the default behavior is not enough
+// MapWithConverters copies values from source to target (pointer), returns an error if any,
+// and uses the `converters` map to convert custom types as defined by the library consumer
 func MapWithConverters(source, target interface{}, converters map[string]TypeConverterFn) error {
 	if err := validateParameters(source, target); err != nil {
 		return err
@@ -61,7 +62,7 @@ func MapWithConverters(source, target interface{}, converters map[string]TypeCon
 	return err
 }
 
-// mapValues - recursively map values from one object to another using reflection
+// mapValues recursively copies values from one object to another using reflection
 func mapValues(sourceValue reflect.Value, targetValue reflect.Value, converters *map[string]TypeConverterFn) (interface{}, error) {
 	switch targetValue.Kind() {
 	case reflect.Ptr:
@@ -149,7 +150,7 @@ func mapToStruct(sourceValue, targetValue reflect.Value, converters *map[string]
 			var err error
 			newValue, err = mapValues(sourceFieldValue, targetFieldValue, converters)
 			if err != nil {
-				return nil, NewFieldError(targetField.Name, "invalid field projection", err)
+				return nil, newFieldError(targetField.Name, "invalid field projection", err)
 			}
 		}
 
