@@ -54,8 +54,8 @@ func (s *Person) GetFullName() string {
 }
 
 type Student struct {
-	ID       int
-	FullName string `mapper:"fromMethod:GetFullName"`
+	ID             int
+	FullName       string    `mapper:"fromMethod:GetFullName"`
 	StudentScore   float64   `mapper:"fromField:Score"`
 }
 
