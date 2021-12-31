@@ -3,7 +3,7 @@
 [![codecov](https://codecov.io/gh/agustinaliagac/mapper/branch/master/graph/badge.svg?token=E6X65Z3EFT)](https://codecov.io/gh/agustinaliagac/mapper)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Tests](https://github.com/agustinaliagac/mapper/actions/workflows/run-tests.yml/badge.svg?branch=master)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/agustinaliagac/mapper)](https://goreportcard.com/report/github.com/agustinaliagac/mapper)
 
 A tiny Go library to perform value mappings from a source to a target using reflection.
 
